@@ -5,17 +5,21 @@ import java.util.Arrays;
 
 import org.kohsuke.stapler.DataBoundConstructor;
 
+import hudson.EnvVars;
 import hudson.Extension;
+import hudson.FilePath;
 import hudson.Launcher;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.BuildListener;
 import hudson.model.Computer;
-import hudson.tasks.BuildWrapper;
+import hudson.model.Run;
+import hudson.model.TaskListener;
 import hudson.tasks.BuildWrapperDescriptor;
 import jenkins.model.Jenkins;
+import jenkins.tasks.SimpleBuildWrapper;
 
-public final class CodeBuilderLogger extends BuildWrapper {
+public final class CodeBuilderLogger extends SimpleBuildWrapper {
   @DataBoundConstructor
   public CodeBuilderLogger() {
     super();
@@ -35,8 +39,8 @@ public final class CodeBuilderLogger extends BuildWrapper {
   }
 
   @Override
-  public Environment setUp(@SuppressWarnings("rawtypes") AbstractBuild build, Launcher launcher, BuildListener listener)
-      throws IOException, InterruptedException {
+  public void setUp(Context context, Run<?, ?> build, FilePath workspace, Launcher launcher, TaskListener listener,
+      EnvVars initialEnvironment) throws IOException, InterruptedException {
     Computer cpu = Arrays.asList(Jenkins.getInstance().getComputers()).stream()
         .filter(c -> c.getChannel() == launcher.getChannel()).findFirst().get();
     if (cpu instanceof CodeBuilderComputer) {
@@ -45,7 +49,5 @@ public final class CodeBuilderLogger extends BuildWrapper {
       listener.hyperlink(cbCpu.getBuildUrl(), cbCpu.getBuildId());
       listener.getLogger().println();
     }
-    return new Environment() {
-    };
   }
 }
