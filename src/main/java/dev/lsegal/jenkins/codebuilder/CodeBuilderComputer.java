@@ -2,6 +2,7 @@ package dev.lsegal.jenkins.codebuilder;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.util.concurrent.Future;
 
 import javax.annotation.Nonnull;
 
@@ -12,7 +13,6 @@ import hudson.model.Computer;
 import hudson.model.Executor;
 import hudson.model.Queue;
 import hudson.slaves.AbstractCloudComputer;
-import jenkins.model.Jenkins;
 
 public class CodeBuilderComputer extends AbstractCloudComputer<CodeBuilderAgent> {
   private static final Logger LOGGER = LoggerFactory.getLogger(CodeBuilderComputer.class);
@@ -72,15 +72,16 @@ public class CodeBuilderComputer extends AbstractCloudComputer<CodeBuilderAgent>
   private void gracefulShutdown() {
     setAcceptingTasks(false);
 
-    Computer.threadPoolForRemoting.submit(() -> {
+    Future<Object> next = Computer.threadPoolForRemoting.submit(() -> {
       LOGGER.info("[CodeBuilder]: [{}]: Terminating agent after task.", this);
       try {
         Thread.sleep(500);
-        Jenkins.getInstance().removeNode(getNode());
+        CodeBuilderCloud.jenkins().removeNode(getNode());
       } catch (Exception e) {
         LOGGER.info("[CodeBuilder]: [{}]: Termination error: {}", this, e.getClass());
       }
       return null;
     });
+    next.notify();
   }
 }

@@ -3,6 +3,8 @@ package dev.lsegal.jenkins.codebuilder;
 import java.io.IOException;
 import java.util.concurrent.TimeoutException;
 
+import javax.annotation.Nonnull;
+
 import com.amazonaws.services.codebuild.model.SourceType;
 import com.amazonaws.services.codebuild.model.StartBuildRequest;
 import com.amazonaws.services.codebuild.model.StartBuildResult;
@@ -10,11 +12,11 @@ import com.amazonaws.services.codebuild.model.StartBuildResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import hudson.model.Node;
 import hudson.model.TaskListener;
 import hudson.slaves.JNLPLauncher;
 import hudson.slaves.SlaveComputer;
 import hudson.util.StreamTaskListener;
-import jenkins.model.Jenkins;
 
 public class CodeBuilderLauncher extends JNLPLauncher {
   private static final int sleepMs = 500;
@@ -34,8 +36,20 @@ public class CodeBuilderLauncher extends JNLPLauncher {
   }
 
   @Override
-  public void launch(SlaveComputer computer, TaskListener listener) {
+  public void launch(@Nonnull SlaveComputer computer, @Nonnull TaskListener listener) {
     this.launched = false;
+    if (!(computer instanceof CodeBuilderComputer)) {
+      LOGGER.error("[CodeBuilder]: Not launching {} since it is not the correct type ({})", computer,
+          CodeBuilderComputer.class.getName());
+      return;
+    }
+
+    Node node = computer.getNode();
+    if (node == null) {
+      LOGGER.error("[CodeBuilder]: Not launching {} since it is missing a node.", computer);
+      return;
+    }
+
     LOGGER.info("[CodeBuilder]: Launching {} with {}", computer, listener);
     CodeBuilderComputer cbcpu = (CodeBuilderComputer) computer;
     StartBuildRequest req = new StartBuildRequest().withProjectName(cloud.getProjectName())
@@ -57,32 +71,37 @@ public class CodeBuilderLauncher extends JNLPLauncher {
         }
         Thread.sleep(sleepMs);
       }
-      throw new TimeoutException(
-          "Timed out while waiting for agent " + computer.getNode() + " to start for build ID: " + buildId);
+      throw new TimeoutException("Timed out while waiting for agent " + node + " to start for build ID: " + buildId);
 
     } catch (Exception e) {
       cbcpu.setBuildId(null);
       LOGGER.error("[CodeBuilder]: Exception while starting build: {}", e.getMessage(), e);
       listener.fatalError("Exception while starting build: %s", e.getMessage());
 
-      if (computer.getNode() instanceof CodeBuilderAgent) {
+      if (node instanceof CodeBuilderAgent) {
         try {
-          Jenkins.getInstance().removeNode(computer.getNode());
+          CodeBuilderCloud.jenkins().removeNode(node);
         } catch (IOException e1) {
-          LOGGER.error("Failed to terminate agent: {}", computer.getNode().getDisplayName(), e);
+          LOGGER.error("Failed to terminate agent: {}", node.getDisplayName(), e);
         }
       }
     }
   }
 
   @Override
-  public void beforeDisconnect(SlaveComputer computer, StreamTaskListener listener) {
-    ((CodeBuilderComputer) computer).setBuildId(null);
+  public void beforeDisconnect(@Nonnull SlaveComputer computer, @Nonnull StreamTaskListener listener) {
+    if (computer instanceof CodeBuilderComputer) {
+      ((CodeBuilderComputer) computer).setBuildId(null);
+    }
   }
 
-  private String buildspec(SlaveComputer computer) {
+  private String buildspec(@Nonnull SlaveComputer computer) {
+    Node n = computer.getNode();
+    if (n == null) {
+      return "";
+    }
     String cmd = String.format("jenkins-agent -noreconnect -workDir \"$CODEBUILD_SRC_DIR\" -url \"%s\" \"%s\" \"%s\"",
-        cloud.getJenkinsUrl(), computer.getJnlpMac(), computer.getNode().getDisplayName());
+        cloud.getJenkinsUrl(), computer.getJnlpMac(), n.getDisplayName());
     StringBuilder builder = new StringBuilder();
     builder.append("version: 0.2\n");
     builder.append("phases:\n");

@@ -9,9 +9,7 @@ import hudson.EnvVars;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
-import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
-import hudson.model.BuildListener;
 import hudson.model.Computer;
 import hudson.model.Run;
 import hudson.model.TaskListener;
@@ -41,7 +39,7 @@ public final class CodeBuilderLogger extends SimpleBuildWrapper {
   @Override
   public void setUp(Context context, Run<?, ?> build, FilePath workspace, Launcher launcher, TaskListener listener,
       EnvVars initialEnvironment) throws IOException, InterruptedException {
-    Computer cpu = Arrays.asList(Jenkins.getInstance().getComputers()).stream()
+    Computer cpu = Arrays.asList(CodeBuilderCloud.jenkins().getComputers()).stream()
         .filter(c -> c.getChannel() == launcher.getChannel()).findFirst().get();
     if (cpu instanceof CodeBuilderComputer) {
       CodeBuilderComputer cbCpu = (CodeBuilderComputer) cpu;

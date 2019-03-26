@@ -81,10 +81,10 @@ public class CodeBuilderCloud extends Cloud {
   @DataBoundConstructor
   public CodeBuilderCloud(String name, @Nonnull String projectName, @Nullable String credentialsId,
       @Nonnull String region) throws InterruptedException {
-    super(StringUtils.isNotBlank(name) ? name : "codebuilder_" + Jenkins.getInstance().clouds.size());
+    super(StringUtils.isNotBlank(name) ? name : "codebuilder_" + jenkins().clouds.size());
 
     this.projectName = projectName;
-    this.credentialsId = credentialsId;
+    this.credentialsId = StringUtils.defaultIfBlank(credentialsId, "");
     if (StringUtils.isBlank(region)) {
       this.region = getDefaultRegion();
     } else {
@@ -94,11 +94,16 @@ public class CodeBuilderCloud extends Cloud {
     LOGGER.info("[CodeBuilder]: Initializing Cloud: {}", this);
   }
 
+  @Nonnull
+  protected static Jenkins jenkins() {
+    return Jenkins.getActiveInstance();
+  }
+
   /**
    * Clear all CodeBuilder nodes on boot-up because these cannot be permanent.
    */
   private static void clearAllNodes() {
-    List<Node> nodes = Jenkins.getInstance().getNodes();
+    List<Node> nodes = jenkins().getNodes();
     if (nodes.size() == 0) {
       return;
     }
@@ -132,7 +137,7 @@ public class CodeBuilderCloud extends Cloud {
 
   @Nonnull
   public String getLabel() {
-    return StringUtils.isBlank(label) ? "" : label;
+    return StringUtils.defaultIfBlank(label, "");
   }
 
   @DataBoundSetter
@@ -147,7 +152,7 @@ public class CodeBuilderCloud extends Cloud {
     } else {
       JenkinsLocationConfiguration config = JenkinsLocationConfiguration.get();
       if (config != null) {
-        return config.getUrl();
+        return StringUtils.defaultIfBlank(config.getUrl(), "unknown");
       }
     }
     return "unknown";
@@ -156,7 +161,7 @@ public class CodeBuilderCloud extends Cloud {
   @DataBoundSetter
   public void setJenkinsUrl(String jenkinsUrl) {
     JenkinsLocationConfiguration config = JenkinsLocationConfiguration.get();
-    if (config != null && config.getUrl() == jenkinsUrl) {
+    if (config != null && StringUtils.equals(config.getUrl(), jenkinsUrl)) {
       return;
     }
     this.jenkinsUrl = jenkinsUrl;
@@ -194,11 +199,11 @@ public class CodeBuilderCloud extends Cloud {
 
   @CheckForNull
   private static AmazonWebServicesCredentials getCredentials(@Nullable String credentialsId) {
-    return AWSCredentialsHelper.getCredentials(credentialsId, Jenkins.getInstance());
+    return AWSCredentialsHelper.getCredentials(credentialsId, jenkins());
   }
 
   private static AWSCodeBuild buildClient(String credentialsId, String region) {
-    ProxyConfiguration proxy = Jenkins.getInstance().proxy;
+    ProxyConfiguration proxy = jenkins().proxy;
     ClientConfiguration clientConfiguration = new ClientConfiguration();
 
     if (proxy != null) {
@@ -263,7 +268,7 @@ public class CodeBuilderCloud extends Cloud {
       final Future<Node> nodeResolver = Computer.threadPoolForRemoting.submit(() -> {
         CodeBuilderLauncher launcher = new CodeBuilderLauncher(cloud);
         CodeBuilderAgent agent = new CodeBuilderAgent(cloud, displayName, launcher);
-        Jenkins.getInstance().addNode(agent);
+        jenkins().addNode(agent);
         return agent;
       });
       list.add(new NodeProvisioner.PlannedNode(displayName, nodeResolver, 1));
@@ -278,8 +283,8 @@ public class CodeBuilderCloud extends Cloud {
    * Jenkins host.
    */
   private long numStillProvisioning() {
-    return Jenkins.getInstance().getNodes().stream().filter(CodeBuilderAgent.class::isInstance)
-        .map(CodeBuilderAgent.class::cast).filter(a -> a.getLauncher().isLaunchSupported()).count();
+    return jenkins().getNodes().stream().filter(CodeBuilderAgent.class::isInstance).map(CodeBuilderAgent.class::cast)
+        .filter(a -> a.getLauncher().isLaunchSupported()).count();
   }
 
   @Override
@@ -317,7 +322,7 @@ public class CodeBuilderCloud extends Cloud {
     }
 
     public ListBoxModel doFillCredentialsIdItems() {
-      return AWSCredentialsHelper.doFillCredentialsIdItems(Jenkins.getInstance());
+      return AWSCredentialsHelper.doFillCredentialsIdItems(jenkins());
     }
 
     public ListBoxModel doFillRegionItems() {
@@ -329,7 +334,7 @@ public class CodeBuilderCloud extends Cloud {
       }
 
       for (Region r : RegionUtils.getRegionsForService(AWSCodeBuild.ENDPOINT_PREFIX)) {
-        if (r.getName() == defaultRegion) {
+        if (StringUtils.equals(r.getName(), defaultRegion)) {
           continue;
         }
         options.add(r.getName());

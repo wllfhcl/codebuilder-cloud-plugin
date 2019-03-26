@@ -22,7 +22,7 @@ import hudson.slaves.ComputerLauncher;
 class CodeBuilderAgent extends AbstractCloudSlave {
   private static final Logger LOGGER = LoggerFactory.getLogger(CodeBuilderAgent.class);
   private static final long serialVersionUID = -6722929807051421839L;
-  private final CodeBuilderCloud cloud;
+  private final transient CodeBuilderCloud cloud;
 
   /**
    * Creates a new CodeBuilderAgent node that provisions a
