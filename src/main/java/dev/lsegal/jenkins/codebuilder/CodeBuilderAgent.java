@@ -27,6 +27,12 @@ class CodeBuilderAgent extends AbstractCloudSlave {
   /**
    * Creates a new CodeBuilderAgent node that provisions a
    * {@link CodeBuilderComputer}.
+   *
+   * @param cloud    a {@link CodeBuilderCloud} object.
+   * @param name     the name of the agent.
+   * @param launcher a {@link hudson.slaves.ComputerLauncher} object.
+   * @throws hudson.model.Descriptor$FormException if any.
+   * @throws java.io.IOException                   if any.
    */
   public CodeBuilderAgent(@Nonnull CodeBuilderCloud cloud, @Nonnull String name, @Nonnull ComputerLauncher launcher)
       throws Descriptor.FormException, IOException {
@@ -37,16 +43,20 @@ class CodeBuilderAgent extends AbstractCloudSlave {
 
   /**
    * Get the cloud instance associated with this builder
+   *
+   * @return a {@link CodeBuilderCloud} object.
    */
   public CodeBuilderCloud getCloud() {
     return cloud;
   }
 
+  /** {@inheritDoc} */
   @Override
   public AbstractCloudComputer<CodeBuilderAgent> createComputer() {
     return new CodeBuilderComputer(this);
   }
 
+  /** {@inheritDoc} */
   @Override
   protected void _terminate(TaskListener listener) throws IOException, InterruptedException {
     listener.getLogger().println("[CodeBuilder]: Terminating agent: " + getDisplayName());

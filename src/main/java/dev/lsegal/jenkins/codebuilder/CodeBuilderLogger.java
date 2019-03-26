@@ -14,10 +14,17 @@ import hudson.model.Computer;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.tasks.BuildWrapperDescriptor;
-import jenkins.model.Jenkins;
 import jenkins.tasks.SimpleBuildWrapper;
 
+/**
+ * CodeBuilderLogger class.
+ *
+ * @author Loren Segal
+ */
 public final class CodeBuilderLogger extends SimpleBuildWrapper {
+  /**
+   * Constructor for CodeBuilderLogger.
+   */
   @DataBoundConstructor
   public CodeBuilderLogger() {
     super();
@@ -36,6 +43,7 @@ public final class CodeBuilderLogger extends SimpleBuildWrapper {
     }
   }
 
+  /** {@inheritDoc} */
   @Override
   public void setUp(Context context, Run<?, ?> build, FilePath workspace, Launcher launcher, TaskListener listener,
       EnvVars initialEnvironment) throws IOException, InterruptedException {

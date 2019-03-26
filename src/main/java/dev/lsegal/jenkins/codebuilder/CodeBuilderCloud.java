@@ -48,8 +48,11 @@ import jenkins.model.JenkinsLocationConfiguration;
 
 /**
  * This is the root class that contains all configuration state about the
- * CodeBuilder cloud agents. Jenkins calls {@link CodeBuilderCloud.provision} on
- * this class to create new nodes.
+ * CodeBuilder cloud agents. Jenkins calls
+ * {@link CodeBuilderCloud#provision(Label label, int excessWorkload)} on this
+ * class to create new nodes.
+ *
+ * @author Loren Segal
  */
 public class CodeBuilderCloud extends Cloud {
   private static final Logger LOGGER = LoggerFactory.getLogger(CodeBuilderCloud.class);
@@ -78,6 +81,17 @@ public class CodeBuilderCloud extends Cloud {
 
   private transient AWSCodeBuild client;
 
+  /**
+   * Constructor for CodeBuilderCloud.
+   *
+   * @param name          the name of the cloud or null if you want it
+   *                      auto-generated.
+   * @param projectName   the name of the AWS CodeBuild project to build from.
+   * @param credentialsId the credentials ID to use or null/empty if pulled from
+   *                      environment.
+   * @param region        the AWS region to use.
+   * @throws InterruptedException if any.
+   */
   @DataBoundConstructor
   public CodeBuilderCloud(String name, @Nonnull String projectName, @Nullable String credentialsId,
       @Nonnull String region) throws InterruptedException {
@@ -94,6 +108,11 @@ public class CodeBuilderCloud extends Cloud {
     LOGGER.info("[CodeBuilder]: Initializing Cloud: {}", this);
   }
 
+  /**
+   * The active Jenkins instance.
+   *
+   * @return a {@link jenkins.model.Jenkins} object.
+   */
   @Nonnull
   protected static Jenkins jenkins() {
     return Jenkins.getActiveInstance();
@@ -120,31 +139,57 @@ public class CodeBuilderCloud extends Cloud {
     }
   }
 
+  /** {@inheritDoc} */
   @Override
   public String toString() {
     return String.format("%s<%s>", name, projectName);
   }
 
+  /**
+   * Getter for the field <code>projectName</code>.
+   *
+   * @return a {@link String} object.
+   */
   @Nonnull
   public String getProjectName() {
     return projectName;
   }
 
+  /**
+   * Getter for the field <code>region</code>.
+   *
+   * @return a {@link String} object.
+   */
   @Nonnull
   public String getRegion() {
     return region;
   }
 
+  /**
+   * Getter for the field <code>label</code>.
+   *
+   * @return a {@link String} object.
+   */
   @Nonnull
   public String getLabel() {
     return StringUtils.defaultIfBlank(label, "");
   }
 
+  /**
+   * Setter for the field <code>label</code>.
+   *
+   * @param label a {@link String} object.
+   */
   @DataBoundSetter
   public void setLabel(String label) {
     this.label = label;
   }
 
+  /**
+   * Getter for the field <code>jenkinsUrl</code>.
+   *
+   * @return a {@link String} object.
+   */
   @Nonnull
   public String getJenkinsUrl() {
     if (StringUtils.isNotBlank(jenkinsUrl)) {
@@ -158,6 +203,11 @@ public class CodeBuilderCloud extends Cloud {
     return "unknown";
   }
 
+  /**
+   * Setter for the field <code>jenkinsUrl</code>.
+   *
+   * @param jenkinsUrl a {@link String} object.
+   */
   @DataBoundSetter
   public void setJenkinsUrl(String jenkinsUrl) {
     JenkinsLocationConfiguration config = JenkinsLocationConfiguration.get();
@@ -167,31 +217,61 @@ public class CodeBuilderCloud extends Cloud {
     this.jenkinsUrl = jenkinsUrl;
   }
 
+  /**
+   * Getter for the field <code>jnlpImage</code>.
+   *
+   * @return a {@link String} object.
+   */
   @Nonnull
   public String getJnlpImage() {
     return StringUtils.isBlank(jnlpImage) ? DEFAULT_JNLP_IMAGE : jnlpImage;
   }
 
+  /**
+   * Setter for the field <code>jnlpImage</code>.
+   *
+   * @param jnlpImage a {@link String} object.
+   */
   @DataBoundSetter
   public void setJnlpImage(String jnlpImage) {
     this.jnlpImage = jnlpImage;
   }
 
+  /**
+   * Getter for the field <code>agentTimeout</code>.
+   *
+   * @return a int.
+   */
   @Nonnull
   public int getAgentTimeout() {
     return agentTimeout == 0 ? DEFAULT_AGENT_TIMEOUT : agentTimeout;
   }
 
+  /**
+   * Setter for the field <code>agentTimeout</code>.
+   *
+   * @param agentTimeout a int.
+   */
   @DataBoundSetter
   public void setAgentTimeout(int agentTimeout) {
     this.agentTimeout = agentTimeout;
   }
 
+  /**
+   * Getter for the field <code>computeType</code>.
+   *
+   * @return a {@link String} object.
+   */
   @Nonnull
   public String getComputeType() {
     return StringUtils.isBlank(computeType) ? DEFAULT_COMPUTE_TYPE : computeType;
   }
 
+  /**
+   * Setter for the field <code>computeType</code>.
+   *
+   * @param computeType a {@link String} object.
+   */
   @DataBoundSetter
   public void setComputeType(String computeType) {
     this.computeType = computeType;
@@ -229,6 +309,11 @@ public class CodeBuilderCloud extends Cloud {
     return builder.build();
   }
 
+  /**
+   * Getter for the field <code>client</code>.
+   *
+   * @return a {@link com.amazonaws.services.codebuild.AWSCodeBuild} object.
+   */
   public synchronized AWSCodeBuild getClient() {
     if (this.client == null) {
       this.client = CodeBuilderCloud.buildClient(credentialsId, region);
@@ -238,6 +323,7 @@ public class CodeBuilderCloud extends Cloud {
 
   private transient long lastProvisionTime = 0;
 
+  /** {@inheritDoc} */
   @Override
   public synchronized Collection<PlannedNode> provision(Label label, int excessWorkload) {
     List<NodeProvisioner.PlannedNode> list = new ArrayList<NodeProvisioner.PlannedNode>();
@@ -287,6 +373,7 @@ public class CodeBuilderCloud extends Cloud {
         .filter(a -> a.getLauncher().isLaunchSupported()).count();
   }
 
+  /** {@inheritDoc} */
   @Override
   public boolean canProvision(Label label) {
     boolean canProvision = label == null ? true : label.matches(Arrays.asList(new LabelAtom(getLabel())));

@@ -14,6 +14,11 @@ import hudson.model.Executor;
 import hudson.model.Queue;
 import hudson.slaves.AbstractCloudComputer;
 
+/**
+ * CodeBuilderComputer class.
+ *
+ * @author Loren Segal
+ */
 public class CodeBuilderComputer extends AbstractCloudComputer<CodeBuilderAgent> {
   private static final Logger LOGGER = LoggerFactory.getLogger(CodeBuilderComputer.class);
   private String buildId;
@@ -21,11 +26,23 @@ public class CodeBuilderComputer extends AbstractCloudComputer<CodeBuilderAgent>
   @Nonnull
   private final CodeBuilderCloud cloud;
 
+  /**
+   * Constructor for CodeBuilderComputer.
+   *
+   * @param agent a {@link CodeBuilderAgent} object.
+   */
   public CodeBuilderComputer(CodeBuilderAgent agent) {
     super(agent);
     this.cloud = agent.getCloud();
   }
 
+  /**
+   * <p>
+   * Getter for the field <code>buildId</code>.
+   * </p>
+   *
+   * @return a {@link String} object.
+   */
   public String getBuildId() {
     return buildId;
   }
@@ -34,6 +51,11 @@ public class CodeBuilderComputer extends AbstractCloudComputer<CodeBuilderAgent>
     this.buildId = buildId;
   }
 
+  /**
+   * Gets a formatted AWS CodeBuild build URL.
+   *
+   * @return a {@link String} object.
+   */
   public String getBuildUrl() {
     try {
       return String.format("https://%s.console.aws.amazon.com/codesuite/codebuild/projects/%s/build/%s",
@@ -43,12 +65,14 @@ public class CodeBuilderComputer extends AbstractCloudComputer<CodeBuilderAgent>
     }
   }
 
+  /** {@inheritDoc} */
   @Override
   public void taskAccepted(Executor executor, Queue.Task task) {
     super.taskAccepted(executor, task);
     LOGGER.info("[CodeBuilder]: [{}]: Task in job '{}' accepted", this, task.getFullDisplayName());
   }
 
+  /** {@inheritDoc} */
   @Override
   public void taskCompleted(Executor executor, Queue.Task task, long durationMS) {
     super.taskCompleted(executor, task, durationMS);
@@ -56,6 +80,7 @@ public class CodeBuilderComputer extends AbstractCloudComputer<CodeBuilderAgent>
     gracefulShutdown();
   }
 
+  /** {@inheritDoc} */
   @Override
   public void taskCompletedWithProblems(Executor executor, Queue.Task task, long durationMS, Throwable problems) {
     super.taskCompletedWithProblems(executor, task, durationMS, problems);
@@ -64,6 +89,7 @@ public class CodeBuilderComputer extends AbstractCloudComputer<CodeBuilderAgent>
     gracefulShutdown();
   }
 
+  /** {@inheritDoc} */
   @Override
   public String toString() {
     return String.format("name: %s buildID: %s", getName(), getBuildId());

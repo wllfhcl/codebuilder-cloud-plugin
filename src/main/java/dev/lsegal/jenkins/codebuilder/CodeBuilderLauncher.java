@@ -18,6 +18,11 @@ import hudson.slaves.JNLPLauncher;
 import hudson.slaves.SlaveComputer;
 import hudson.util.StreamTaskListener;
 
+/**
+ * CodeBuilderLauncher class.
+ *
+ * @author Loren Segal
+ */
 public class CodeBuilderLauncher extends JNLPLauncher {
   private static final int sleepMs = 500;
   private static final Logger LOGGER = LoggerFactory.getLogger(CodeBuilderLauncher.class);
@@ -25,16 +30,23 @@ public class CodeBuilderLauncher extends JNLPLauncher {
   private final CodeBuilderCloud cloud;
   private boolean launched;
 
+  /**
+   * Constructor for CodeBuilderLauncher.
+   *
+   * @param cloud a {@link CodeBuilderCloud} object.
+   */
   public CodeBuilderLauncher(CodeBuilderCloud cloud) {
     super();
     this.cloud = cloud;
   }
 
+  /** {@inheritDoc} */
   @Override
   public boolean isLaunchSupported() {
     return !launched;
   }
 
+  /** {@inheritDoc} */
   @Override
   public void launch(@Nonnull SlaveComputer computer, @Nonnull TaskListener listener) {
     this.launched = false;
@@ -88,6 +100,7 @@ public class CodeBuilderLauncher extends JNLPLauncher {
     }
   }
 
+  /** {@inheritDoc} */
   @Override
   public void beforeDisconnect(@Nonnull SlaveComputer computer, @Nonnull StreamTaskListener listener) {
     if (computer instanceof CodeBuilderComputer) {
