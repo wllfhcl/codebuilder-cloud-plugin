@@ -13,13 +13,8 @@ provider.
 
 ## Plugin Installation
 
-This plugin artifact ID is `codebuilder-cloud` but has yet to be made available
-to the Jenkins plugin repository.
-
-The best way to install this now is to grab the `codebuilder-cloud.hpi`
-artifact from Releases and place the file in `JENKINS_HOME/plugins` (where
-JENKINS_HOME is the location on disk where Jenkins configuration lives)
-and dependencies listed below.
+You can install the plugin by searching for "CodeBuilder: AWS CodeBuild Cloud Agents"
+(artifact ID is `codebuilder-cloud`) in the Jenkins Plugin Manager.
 
 ### Compatibility and Requirements
 
