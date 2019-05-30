@@ -18,7 +18,7 @@
   </f:entry>
 
   <f:entry field="computeType" title="${%Compute Type}">
-    <select>
+    <select name="computeType">
       <option value="BUILD_GENERAL1_SMALL">Small (2 vCPUs, 3GB RAM, 64GB Disk)</option>
       <option value="BUILD_GENERAL1_MEDIUM">Medium (4 vCPUs, 7GB RAM, 128GB Disk)</option>
       <option value="BUILD_GENERAL1_LARGE">Large (8 vCPUs, 15GB RAM, 128GB Disk)</option>
