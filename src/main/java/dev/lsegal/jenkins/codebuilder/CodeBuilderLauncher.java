@@ -113,8 +113,8 @@ public class CodeBuilderLauncher extends JNLPLauncher {
     if (n == null) {
       return "";
     }
-    String cmd = String.format("jenkins-agent -noreconnect -workDir \"$CODEBUILD_SRC_DIR\" -url \"%s\" \"%s\" \"%s\"",
-        cloud.getJenkinsUrl(), computer.getJnlpMac(), n.getDisplayName());
+    String cmd = String.format("%s -noreconnect -workDir \"$CODEBUILD_SRC_DIR\" -url \"%s\" \"%s\" \"%s\"",
+        cloud.getJnlpCommand(), cloud.getJenkinsUrl(), computer.getJnlpMac(), n.getDisplayName());
     StringBuilder builder = new StringBuilder();
     builder.append("version: 0.2\n");
     builder.append("phases:\n");
