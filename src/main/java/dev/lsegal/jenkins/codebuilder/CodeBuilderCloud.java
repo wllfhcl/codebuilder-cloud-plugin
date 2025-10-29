@@ -365,12 +365,10 @@ public class CodeBuilderCloud extends Cloud {
     }
 
     String labelName = label == null ? getLabel() : label.getDisplayName();
-    long stillProvisioning = numStillProvisioning();
-    long numToLaunch = Math.max(excessWorkload - stillProvisioning, 0);
-    LOGGER.info("[CodeBuilder]: Provisioning {} nodes for label '{}' ({} already provisioning)", numToLaunch, labelName,
-        stillProvisioning);
 
-    for (int i = 0; i < numToLaunch; i++) {
+    LOGGER.info("[CodeBuilder]: Provisioning {} nodes for label '{}'", excessWorkload, labelName);
+
+    for (int i = 0; i < excessWorkload; i++) {
       final String suffix = RandomStringUtils.randomAlphabetic(4);
       final String displayName = String.format("%s.cb-%s", projectName, suffix);
       final CodeBuilderCloud cloud = this;
@@ -385,15 +383,6 @@ public class CodeBuilderCloud extends Cloud {
 
     lastProvisionTime = System.currentTimeMillis();
     return list;
-  }
-
-  /**
-   * Find the number of {@link CodeBuilderAgent} instances still connecting to
-   * Jenkins host.
-   */
-  private long numStillProvisioning() {
-    return jenkins().getNodes().stream().filter(CodeBuilderAgent.class::isInstance).map(CodeBuilderAgent.class::cast)
-        .filter(a -> a.getLauncher().isLaunchSupported()).count();
   }
 
   /** {@inheritDoc} */
